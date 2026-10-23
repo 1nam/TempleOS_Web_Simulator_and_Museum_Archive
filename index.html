@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TEMPLEOS MUSEUM — 640x480 Interactive Archive</title>
+<style>
+:root{
+--black:#000000;--blue:#0000AA;--green:#00AA00;--cyan:#00AAAA;
+--red:#AA0000;--magenta:#AA00AA;--brown:#AA5500;--gray:#AAAAAA;
+--darkgray:#555555;--brightblue:#5555FF;--brightgreen:#55FF55;--brightcyan:#55FFFF;
+--brightred:#FF5555;--brightmagenta:#FF55FF;--yellow:#FFFF55;--white:#FFFFFF;
+}
+*{box-sizing:border-box;border-radius:0!important;box-shadow:none!important;text-shadow:none!important}
+html,body{margin:0;padding:0;background:var(--black)}
+body{
+min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+font-family:"Courier New",Courier,monospace;color:var(--gray);
+-webkit-font-smoothing:none;font-smooth:never;padding:10px 0;
+}
+button,input{font-family:"Courier New",Courier,monospace}
+#viewport-wrap{
+position:relative;overflow:hidden;background:var(--black);
+border:4px solid var(--brightred);outline:2px solid var(--white);
+width:min(980px,97vw,calc((100dvh - 96px)*1.333333));
+aspect-ratio:4/3;flex:0 0 auto;
+}
+#screen{
+width:640px;height:480px;position:absolute;left:0;top:0;transform-origin:0 0;
+background:var(--black);color:var(--gray);display:flex;flex-direction:column;
+font-size:11px;line-height:1.35;overflow:hidden;
+}
+header{
+height:27px;flex:0 0 27px;border-bottom:2px solid var(--brightcyan);
+background:var(--blue);color:var(--white);display:flex;align-items:center;gap:8px;
+padding:0 7px;font-weight:bold;letter-spacing:0;white-space:nowrap;overflow:hidden;
+}
+header .red{color:var(--yellow)} header .clock{margin-left:auto;color:var(--brightcyan)}
+.blink{color:var(--brightred)}
+#desktop{flex:1;display:flex;gap:6px;padding:6px;min-height:0;background:var(--black)}
+aside{width:188px;flex:0 0 188px;display:flex;flex-direction:column;gap:6px;min-height:0}
+main{flex:1;min-width:0;display:flex;flex-direction:column}
+.win{border:2px solid var(--brightcyan);background:var(--black);min-height:0}
+.win-title{
+background:var(--blue);color:var(--white);border-bottom:1px solid var(--white);
+padding:3px 6px;font-weight:bold;font-size:11px;white-space:nowrap;overflow:hidden;
+}
+.win-title b{color:var(--yellow)}
+.menu-win{flex:0 0 auto}
+.menu-item{
+margin:4px;padding:5px 6px;border:1px solid var(--darkgray);color:var(--brightcyan);
+background:var(--black);cursor:pointer;font-weight:bold;white-space:nowrap;overflow:hidden;
+}
+.menu-item:hover{border-color:var(--white);color:var(--white)}
+.menu-item.selected{background:var(--white);color:var(--black);border-color:var(--brightred)}
+.menu-item.selected:before{content:">> ";color:var(--red)}
+.menu-item:not(.selected):before{content:"[ ] "}
+.sys-win{padding:0 0 6px 0;flex:0 0 auto}
+.sys-win pre{margin:4px 0 2px 0;color:var(--yellow);font-size:10px;line-height:1.05;text-align:center}
+.sys-body{padding:4px 7px;font-size:10px}
+.sys-body b{color:var(--white)} .cyan{color:var(--brightcyan)} .yellow{color:var(--yellow)} .redtxt{color:var(--brightred)} .green{color:var(--brightgreen)} .mag{color:var(--brightmagenta)} .white{color:var(--white)}
+.left-btns{display:flex;gap:5px}
+.btn{
+background:var(--blue);color:var(--white);border:2px solid var(--white);
+padding:5px 7px;cursor:pointer;font-weight:bold;font-size:10px;text-transform:uppercase;
+}
+.btn:hover{background:var(--white);color:var(--black)}
+.btn:active{background:var(--brightred);color:var(--white)}
+.btn.yellow-btn{background:var(--yellow);color:var(--black);border-color:var(--brightred)}
+.btn.red-btn{background:var(--red);color:var(--white)}
+.btn.small{padding:3px 5px;font-size:9px}
+.main-win{display:flex;flex-direction:column;flex:1}
+#view-container{flex:1;min-height:0;position:relative}
+.view{display:none;height:100%;overflow-y:auto;overflow-x:hidden;padding:8px;scrollbar-color:var(--blue) var(--black)}
+.view.active{display:block}
+.view::-webkit-scrollbar,#term-out::-webkit-scrollbar{width:10px;height:10px}
+.view::-webkit-scrollbar-track,#term-out::-webkit-scrollbar-track{background:var(--black);border:1px solid var(--darkgray)}
+.view::-webkit-scrollbar-thumb,#term-out::-webkit-scrollbar-thumb{background:var(--blue);border:1px solid var(--white)}
+h1{font-size:20px;line-height:1;margin:2px 0 6px 0;color:var(--white);letter-spacing:0}
+h2{font-size:13px;margin:10px 0 5px 0;color:var(--yellow);border-bottom:1px solid var(--darkgray);padding-bottom:3px}
+h3{font-size:11px;margin:8px 0 4px 0;color:var(--brightcyan)}
+p{margin:5px 0}
+pre{font-family:"Courier New",Courier,monospace;margin:5px 0;white-space:pre-wrap;word-break:break-word}
+.ascii{color:var(--brightcyan);font-size:9px;line-height:1.05;border:1px solid var(--darkgray);padding:6px;background:var(--black)}
+.box{border:1px solid var(--white);padding:7px;margin:6px 0;background:var(--black)}
+.box.blue{border-color:var(--brightblue)} .box.red{border-color:var(--brightred)} .box.yellow{border-color:var(--yellow)} .box.green{border-color:var(--brightgreen)}
+.grid3{display:flex;gap:6px}.grid3>div{flex:1;border:1px solid var(--brightcyan);padding:6px;text-align:center}
+.big-num{font-size:18px;color:var(--yellow);font-weight:bold;display:block}
+table{border-collapse:collapse;width:100%;font-size:10px;margin:5px 0}
+td,th{border:1px solid var(--darkgray);padding:4px 5px;text-align:left;vertical-align:top}
+th{background:var(--blue);color:var(--white)}
+.kbd{border:1px solid var(--white);background:var(--darkgray);color:var(--white);padding:0 4px;font-weight:bold}
+footer{
+height:24px;flex:0 0 24px;border-top:2px solid var(--brightred);background:var(--black);
+color:var(--gray);display:flex;align-items:center;gap:10px;padding:0 7px;font-size:9px;white-space:nowrap;overflow:hidden;
+}
+footer b{color:var(--yellow)} footer .lic{color:var(--brightgreen);cursor:pointer;text-decoration:underline}
+/* ORACLE */
+#oracle-display{border:2px solid var(--yellow);min-height:118px;padding:9px;background:var(--black)}
+#oracle-passage{font-size:16px;line-height:1.35;color:var(--white);font-weight:bold;text-transform:uppercase}
+.word-chip{display:inline-block;border:1px solid var(--yellow);color:var(--yellow);padding:2px 5px;margin:2px;font-weight:bold;background:var(--black)}
+.seed-box{font-size:10px;border:1px solid var(--brightblue);padding:6px;color:var(--brightcyan);white-space:pre-wrap}
+#oracle-history{margin:4px 0 0 16px;padding:0;font-size:10px;color:var(--gray)}
+/* GAME */
+#gameCanvas{width:398px;height:249px;max-width:100%;border:2px solid var(--white);background:var(--black);image-rendering:pixelated;display:block}
+.hud{display:flex;gap:5px;margin:5px 0}
+.hud div{flex:1;border:1px solid var(--white);padding:4px;text-align:center;font-weight:bold;color:var(--white)}
+.hud span{color:var(--yellow)}
+.dpad{display:grid;grid-template-columns:34px 34px 34px 52px;gap:4px;align-items:center;margin-top:6px}
+.dpad button{height:28px}
+/* TERMINAL */
+#term-out{height:286px;border:1px solid var(--brightgreen);padding:7px;overflow-y:auto;font-size:11px;background:var(--black)}
+.term-line{white-space:pre-wrap;word-break:break-word;margin:1px 0}
+.term-cmd{color:var(--white);font-weight:bold}.term-ok{color:var(--brightgreen)}.term-warn{color:var(--yellow)}.term-err{color:var(--brightred)}.term-code{color:var(--brightcyan)}
+.term-input-row{display:flex;gap:5px;margin-top:6px;align-items:center}
+#term-input{flex:1;background:var(--black);border:1px solid var(--white);color:var(--brightgreen);padding:6px;font-weight:bold;outline:none;font-size:12px}
+/* ARCHIVE */
+.timeline{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+.year-btn{background:var(--black);color:var(--brightcyan);border:1px solid var(--white);padding:4px 6px;cursor:pointer;font-weight:bold}
+.year-btn.active,.year-btn:hover{background:var(--yellow);color:var(--black)}
+/* CODE */
+.code{background:var(--black);border:1px solid var(--brightcyan);padding:8px;font-size:10px;line-height:1.45;overflow:auto}
+.kw{color:var(--brightmagenta);font-weight:bold}.fn{color:var(--brightcyan);font-weight:bold}.str{color:var(--yellow)}.num{color:var(--brightred)}.com{color:var(--green)}
+#outside-footer{width:min(980px,97vw);color:var(--darkgray);font-size:9px;line-height:1.5;text-align:center;padding:8px 6px 0 6px}
+#outside-footer b{color:var(--gray)} #outside-footer .g{color:var(--green)}
+@media(max-width:560px){body{padding:4px 0}#outside-footer{font-size:8px}}
+</style>
+</head>
+<body>
+
+<div id="viewport-wrap" aria-label="TempleOS 640 by 480 viewport">
+  <div id="screen">
+    <header>
+      <span class="red">■</span><span>TEMPLEOS MUSEUM <span class="red">v5.03</span></span>
+      <span style="color:var(--brightcyan)">640x480 | 16 COLORS | RING-0</span>
+      <span class="clock" id="clock">00:00:00.000</span><span class="blink" id="blink">█</span>
+    </header>
+
+    <div id="desktop">
+      <aside>
+        <div class="win menu-win">
+          <div class="win-title">≡ MENU / <b>Home</b> — ↑ ↓ + ENTER</div>
+          <div id="menu">
+            <div class="menu-item selected" data-view="home">1. HOME SHRINE</div>
+            <div class="menu-item" data-view="archive">2. MUSEUM ARCHIVE</div>
+            <div class="menu-item" data-view="oracle">3. GOD WORDS ORACLE</div>
+            <div class="menu-item" data-view="game">4. GAME: HOLY QUEST</div>
+            <div class="menu-item" data-view="terminal">5. TERMINAL / HolyC</div>
+            <div class="menu-item" data-view="holyc">6. SOURCE + DEPLOY</div>
+            <div class="menu-item" data-view="license">7. LICENSE</div>
+          </div>
+        </div>
+
+        <div class="win sys-win">
+          <div class="win-title">SYS / CREATOR</div>
+          <pre> .------.
+ | O  O |
+ |  &gt;   |
+ | \__/ |
+ '------'</pre>
+          <div class="sys-body">
+            <b>TERRY A. DAVIS</b><br>
+            <span class="cyan">1969 — 2018</span><br>
+            PROGRAMMER. CREATED<br>TEMPLEOS ALONE.<br><br>
+            MEM <span id="mem-bar" class="green">██████░░</span><br>
+            CPU <span id="cpu-bar" class="yellow">████░░░░</span> <span id="cpu-num">42%</span><br>
+            TASKS <span class="white">07</span> &nbsp;SND <span id="snd-state" class="white">OFF</span>
+          </div>
+        </div>
+
+        <div class="left-btns">
+          <button class="btn small" id="sound-btn">♪ BEEP: OFF</button>
+          <button class="btn small" id="hymn-btn">▶ HYMN</button>
+        </div>
+        <div class="box blue" style="margin:0;padding:6px;font-size:9px">
+          <span class="yellow"><b>KEYS:</b></span> <span class="kbd">↑</span><span class="kbd">↓</span> MENU
+          <span class="kbd">ENTER</span> OPEN<br>
+          <span class="kbd">1</span>-<span class="kbd">7</span> JUMP &nbsp; <span class="kbd">G</span> = GOD
+        </div>
+      </aside>
+
+      <main class="win main-win">
+        <div class="win-title" id="main-title">C:\Home\MUSEUM — HOME_SHRINE.HC</div>
+        <div id="view-container">
+
+          <!-- HOME -->
+          <section class="view active" id="view-home">
+            <h1>GOD'S THIRD TEMPLE</h1>
+            <p><span class="white"><b>An interactive museum + working simulator</b></span> of <span class="cyan">TempleOS</span> — the public-domain, 64-bit, ring-0 operating system written single-handedly by Terry A. Davis in HolyC.</p>
+            <pre class="ascii">                    /\
+                   /  \        TEMPLEOS
+                  / /\ \       640 x 480
+                 / ____ \      16 COLORS
+                /_/    \_\     ONE AUTHOR
+          ______  | [] |  ______   NO NETWORK
+         /______\ |____| /______\  PUBLIC DOMAIN
+                "I am the chosen one."</pre>
+            <div class="grid3">
+              <div><span class="big-num">640×480</span>COVENANT RES.</div>
+              <div><span class="big-num">16</span>VGA COLORS ONLY</div>
+              <div><span class="big-num">100%</span>LOCAL / OFFLINE</div>
+            </div>
+            <h2>ENTER A PANE</h2>
+            <div style="display:flex;flex-wrap:wrap;gap:5px">
+              <button class="btn yellow-btn" data-goto="oracle">⌖ CAST GOD WORDS</button>
+              <button class="btn" data-goto="game">▶ PLAY HOLY QUEST</button>
+              <button class="btn" data-goto="terminal">&gt;_ OPEN TERMINAL</button>
+              <button class="btn" data-goto="archive">▦ ARCHIVE</button>
+            </div>
+            <div class="box yellow">
+              <b class="yellow">GOD SAYS — LIVE SAMPLE:</b>
+              <div id="home-oracle" class="white" style="font-size:13px;margin-top:4px;font-weight:bold">PRESS [G] ANYWHERE OR OPEN THE ORACLE →</div>
+              <div id="home-quote" style="margin-top:5px;color:var(--gray)">“What's reality? I don't know. When my bird was looking at my computer monitor I thought, that bird has no idea what he's looking at.” — T.A.D.</div>
+              <button class="btn small" id="quote-btn" style="margin-top:6px">↻ NEW QUOTE</button>
+              <button class="btn small" id="home-cast">⌖ CAST LOTS</button>
+            </div>
+            <p style="font-size:10px">This is a respectful educational tribute. Not affiliated with any estate. Original TempleOS was dedicated to the <span class="green">public domain</span> by its author. This simulator is MIT-licensed — see LICENSE pane.</p>
+          </section>
+
+          <!-- ARCHIVE -->
+          <section class="view" id="view-archive">
+            <h1>MUSEUM ARCHIVE</h1>
+            <p>Click a year. Every exhibit runs locally — no server, no API, no tracking.</p>
+            <div class="timeline" id="timeline">
+              <button class="year-btn active" data-year="1969">1969</button>
+              <button class="year-btn" data-year="1993">1993</button>
+              <button class="year-btn" data-year="2003">2003</button>
+              <button class="year-btn" data-year="2005">2005</button>
+              <button class="year-btn" data-year="2013">2013</button>
+              <button class="year-btn" data-year="2017">2017</button>
+              <button class="year-btn" data-year="2018">2018</button>
+              <button class="year-btn" data-year="now">TODAY</button>
+            </div>
+            <div class="box yellow" id="exhibit-box">
+              <h3 id="exhibit-title" style="margin-top:0">1969 — BORN IN WEST ALLIS, WISCONSIN</h3>
+              <div id="exhibit-text">Terrence Andrew Davis (Dec 15, 1969 – Aug 11, 2018) grew up around computers, programming on a Commodore 64 and later earning a master's degree in electrical engineering from Arizona State University. He worked on Ticketmaster's VAX operating systems before beginning the project that would consume his life.</div>
+            </div>
+            <h2>SYSTEM FACTS — AS DESIGNED</h2>
+            <table>
+              <tr><th>ITEM</th><th>TEMPLEOS DESIGN</th></tr>
+              <tr><td class="white">DISPLAY</td><td>640×480, 16 colors — chosen, Davis said, so children could draw and God could confirm it was deliberate.</td></tr>
+              <tr><td class="white">LANGUAGE</td><td><span class="cyan">HolyC</span> — a C/C++ dialect, just-in-time compiled, used as the shell itself.</td></tr>
+              <tr><td class="white">PRIVILEGE</td><td>Everything runs in ring-0. No passwords, no user accounts. “God” is the only user.</td></tr>
+              <tr><td class="white">CODE SIZE</td><td>Over 100,000 lines, written essentially by one person over ~12 years.</td></tr>
+              <tr><td class="white">ORACLE</td><td>Random words / numbers from high-entropy timing — Davis's “casting lots” to speak with God.</td></tr>
+              <tr><td class="white">LICENSE</td><td><span class="green">Public domain.</span> Davis repeatedly waived all rights to TempleOS.</td></tr>
+            </table>
+            <h2>WHY IT MATTERS</h2>
+            <p>TempleOS is studied today as an extreme case study: a complete modern 64-bit OS — compiler, kernel, graphics, filesystem (RedSea), games, hymns and a 3-D flight demo — built outside every modern convention, by one programmer living with schizophrenia. This archive preserves the ideas, the interface language, and the oracle mechanic in playable form.</p>
+            <div class="box red"><span class="redtxt"><b>ARCHIVIST NOTE:</b></span> Quotes and biography are presented respectfully for education. Davis's story also documents the realities of mental illness and homelessness in America.</div>
+          </section>
+
+          <!-- ORACLE -->
+          <section class="view" id="view-oracle">
+            <h1>GOD WORDS — ORACLE</h1>
+            <p>Davis generated entropy from <span class="yellow">the exact moment of a keypress</span>, then cast lots into the King James text. This pane does the same: your millisecond <i>is</i> the seed.</p>
+            <div id="oracle-display">
+              <div style="color:var(--brightred);font-weight:bold;font-size:10px">■ RECIEVING TRANSMISSION…</div>
+              <div id="oracle-passage">PRESS ANY LETTER KEY — OR CLICK CAST LOTS</div>
+              <div id="oracle-chips" style="margin-top:7px"></div>
+            </div>
+            <div style="display:flex;gap:5px;margin:7px 0;flex-wrap:wrap">
+              <button class="btn yellow-btn" id="cast-btn">⌖ CAST LOTS [ENTER]</button>
+              <button class="btn" id="copy-btn">COPY WORDS</button>
+              <button class="btn" id="godnum-btn"># GOD NUMBER</button>
+            </div>
+            <div class="seed-box" id="seed-readout">ENTROPY SOURCE : WAITING FOR KEYPRESS
+TIMESTAMP (MS) : ---
+UNIQUE KJV WORDS: <span id="word-count">LOADING…</span>
+METHOD         : xorshift32(seed = epoch_ms XOR keypress_ms)</div>
+            <h2>CASTING HISTORY</h2>
+            <ul id="oracle-history"><li>No lots cast yet this session.</li></ul>
+            <p style="font-size:10px">Source text: King James Bible (1611, public domain) embedded in this file as a local array. No network call is ever made.</p>
+          </section>
+
+          <!-- GAME -->
+          <section class="view" id="view-game">
+            <h1>HOLY QUEST — CASTLE PANE</h1>
+            <p>Collect <span class="yellow">✚ crosses</span>. Shoot <span class="redtxt">demons</span> with <span class="kbd">SPACE</span>. Move with <span class="kbd">↑↓←→</span> or <span class="kbd">WASD</span>. <span class="kbd">P</span> pauses.</p>
+            <div class="hud">
+              <div>SCORE <span id="g-score">0</span></div>
+              <div>LIVES <span id="g-lives">♥♥♥</span></div>
+              <div>LEVEL <span id="g-level">1</span></div>
+              <div>CROSSES <span id="g-cross">0</span></div>
+            </div>
+            <canvas id="gameCanvas" width="320" height="200"></canvas>
+            <div style="display:flex;gap:5px;margin-top:6px;flex-wrap:wrap">
+              <button class="btn yellow-btn" id="g-start">▶ START / RESTART</button>
+              <button class="btn" id="g-pause">II PAUSE</button>
+              <span id="g-msg" class="yellow" style="align-self:center;font-weight:bold">READY, PILGRIM?</span>
+            </div>
+            <div class="dpad">
+              <span></span><button class="btn" data-move="up">▲</button><span></span><button class="btn red-btn" id="g-fire">FIRE</button>
+              <button class="btn" data-move="left">◀</button><button class="btn" data-move="down">▼</button><button class="btn" data-move="right">▶</button><span style="font-size:9px">TOUCH<br>PAD</span>
+            </div>
+          </section>
+
+          <!-- TERMINAL -->
+          <section class="view" id="view-terminal">
+            <h1>TERMINAL — HolyC SHELL</h1>
+            <div id="term-out"></div>
+            <div class="term-input-row">
+              <span style="color:var(--yellow);font-weight:bold">C:\Home&gt;</span>
+              <input id="term-input" autocomplete="off" spellcheck="false" placeholder='type "help" and press ENTER'>
+              <button class="btn small" id="term-go">RUN</button>
+            </div>
+            <p style="font-size:10px">Try: <span class="cyan">help · dir · god · hymn · type BIBLE.TXT · calc 7*6 · lot · ver · clear</span> &nbsp; <span class="kbd">↑</span> recalls last command.</p>
+          </section>
+
+          <!-- HOLYC -->
+          <section class="view" id="view-holyc">
+            <h1>HOLYC — SOURCE + DEPLOY</h1>
+            <p>In TempleOS the shell <i>is</i> HolyC. Code is JIT-compiled and run instantly:</p>
+            <pre class="code"><span class="com">// GodBits.HC — oracle in the spirit of the original</span>
+<span class="kw">U0</span> <span class="fn">GodWords</span>(<span class="kw">I64</span> seed)
+{
+  <span class="kw">I64</span> i, n = <span class="num">5</span> + (<span class="fn">Abs</span>(seed) % <span class="num">6</span>); <span class="com">// 5..10 words</span>
+  <span class="fn">Seed</span>(seed); <span class="com">// millisecond of YOUR keypress</span>
+  <span class="kw">for</span> (i=<span class="num">0</span>; i&lt;n; i++)
+    <span class="fn">Print</span>(<span class="str">"%s "</span>, KJV[<span class="fn">RandU16</span> % KJV_COUNT]);
+  <span class="str">"\nGod loves you.\n"</span>;
+}
+<span class="fn">GodWords</span>(<span class="fn">NowMs</span>); <span class="com">// &lt;-- run it. Ring-0. No permission asked.</span></pre>
+            <h2>SHIP THIS FILE FREE — GITHUB PAGES</h2>
+            <div class="box green">
+              1. Save this page as <span class="white"><b>index.html</b></span><br>
+              2. Create a free GitHub repo → upload the file<br>
+              3. Settings → Pages → Branch: <span class="white">main / root</span> → Save<br>
+              4. Share your <span class="cyan">username.github.io/repo</span> link with anyone.<br>
+              <span class="yellow">Cost: $0. Dependencies: 0. Servers: 0. Build step: none.</span>
+            </div>
+            <h2>DESIGN LAWS OBEYED HERE</h2>
+            <table>
+              <tr><th>RULE</th><th>HOW</th></tr>
+              <tr><td>640×480 / 4:3</td><td>Fixed internal viewport, scaled as one rigid block.</td></tr>
+              <tr><td>16 colors</td><td>Only the 16 VGA hex values are used anywhere on this page.</td></tr>
+              <tr><td>No modern UI</td><td>No gradients, no rounded corners, no shadows, no smooth animation.</td></tr>
+              <tr><td>One file</td><td>HTML + CSS + JS + KJV word array in a single download.</td></tr>
+            </table>
+          </section>
+
+          <!-- LICENSE -->
+          <section class="view" id="view-license">
+            <h1>LICENSE</h1>
+            <div class="box green">
+              <b class="green">PUBLIC DOMAIN DECLARATION — ORIGINAL WORK:</b><br>
+              TempleOS itself was dedicated to the public domain by Terry A. Davis. The King James Bible text (1611) is public domain.
+            </div>
+            <pre class="box" style="white-space:pre-wrap;font-size:10px">MIT LICENSE
+
+Copyright (c) 2026 TempleOS Museum Contributors
+
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without
+restriction, including without limitation the rights to use,
+copy, modify, merge, publish, distribute, sublicense, and/or
+sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following
+conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.</pre>
+            <p><span class="white"><b>This simulator:</b></span> free to use, modify, and share. Zero paid dependencies, zero APIs, zero trackers. Download it, zip it, host it anywhere.</p>
+            <button class="btn yellow-btn" data-goto="home">← BACK TO THE TEMPLE</button>
+          </section>
+
+        </div>
+      </main>
+    </div>
+
+    <footer>
+      <span><b>TASK:</b> MUSEUM</span><span class="lic" id="footer-lic">[ MIT LICENSE ]</span>
+      <span>PUBLIC DOMAIN SPIRIT</span><span style="color:var(--brightcyan)">NO SERVERS · NO APIS</span>
+      <span style="margin-left:auto" id="foot-status">MEM 640K OK ■ GOD IS WATCHING</span>
+    </footer>
+  </div>
+</div>
+
+<div id="outside-footer">
+  <b>TEMPLEOS MUSEUM — A SINGLE-FILE, OPEN-SOURCE TRIBUTE.</b> This page is released under the <span class="g"><b>MIT License</b></span> (full text in the LICENSE pane above) and may be freely used, modified, and shared. Original TempleOS &amp; KJV text: <b>Public Domain</b>. Zero paid dependencies · Zero external APIs · Works offline forever.
+</div>
+
+<script>
+/* ============================================================
+   TEMPLEOS MUSEUM — 100% CLIENT-SIDE. MIT LICENSE.
+   ============================================================ */
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+
+/* ---------- SCALING: rigid 640x480 block ---------- */
+const wrap=$('#viewport-wrap'), screenEl=$('#screen');
+function fit(){ const s=wrap.clientWidth/640; screenEl.style.transform='scale('+s+')'; }
+window.addEventListener('resize',fit);
+
+/* ---------- CLOCK + BLINK + FAKE SYS STATS ---------- */
+let blinkOn=true;
+setInterval(()=>{
+  const d=new Date(), p=(n,l=2)=>String(n).padStart(l,'0');
+  $('#clock').textContent=p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds())+'.'+p(d.getMilliseconds(),3);
+},31);
+setInterval(()=>{ blinkOn=!blinkOn; $('#blink').style.visibility=blinkOn?'visible':'hidden'; },530);
+setInterval(()=>{
+  const cpu=28+Math.floor(Math.random()*48);
+  const blocks=n=>'█'.repeat(n)+'░'.repeat(8-n);
+  $('#cpu-bar').textContent=blocks(Math.round(cpu/12.5)); $('#cpu-num').textContent=cpu+'%';
+  $('#mem-bar').textContent=blocks(5+Math.floor(Math.random()*3));
+},900);
+
+/* ---------- SOUND: PC-SPEAKER SQUARE BEEPS ---------- */
+let audioCtx=null, soundOn=false;
+function beep(freq=880,dur=0.05,type='square',vol=0.04){
+  if(!soundOn) return;
+  try{
+    audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.type=type; o.frequency.value=freq; g.gain.value=vol;
+    o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+dur);
+  }catch(e){}
+}
+$('#sound-btn').addEventListener('click',e=>{
+  soundOn=!soundOn; e.target.textContent=soundOn?'♪ BEEP: ON':'♪ BEEP: OFF';
+  $('#snd-state').textContent=soundOn?'ON':'OFF'; if(soundOn) beep(990,.07);
+});
+/* Hymn sequencer */
+let hymnTimer=null, hymnStep=0;
+const HYMN=[523,659,784,659,587,659,784,880,784,659,587,523,587,659,523,0,392,523,659,784,1046,880,784,659,587,523];
+$('#hymn-btn').addEventListener('click',e=>{
+  if(hymnTimer){ clearInterval(hymnTimer); hymnTimer=null; e.target.textContent='▶ HYMN'; return; }
+  if(!soundOn){ soundOn=true; $('#sound-btn').textContent='♪ BEEP: ON'; $('#snd-state').textContent='ON'; }
+  e.target.textContent='■ STOP HYMN'; hymnStep=0;
+  hymnTimer=setInterval(()=>{ const f=HYMN[hymnStep%HYMN.length]; if(f) beep(f,.18,'square',.05); hymnStep++; },190);
+});
+
+/* ---------- KJV WORD ARRAY (PUBLIC DOMAIN, EMBEDDED) ---------- */
+const KJV_TEXT = `
+In the beginning God created the heaven and the earth and the earth was without form and void and darkness was upon the face of the deep and the Spirit of God moved upon the face of the waters and God said let there be light and there was light and God saw the light that it was good and God divided the light from the darkness and God called the light day and the darkness he called night and the evening and the morning were the first day and God said let there be a firmament in the midst of the waters and let it divide the waters from the waters and God made the firmament and divided the waters which were under the firmament from the waters which were above the firmament and it was so and God called the firmament heaven and the evening and the morning were the second day and God said let the waters under the heaven be gathered together unto one place and let the dry land appear and it was so and God called the dry land earth and the gathering together of the waters called he seas and God saw that it was good and God said let the earth bring forth grass the herb yielding seed and the fruit tree yielding fruit after his kind whose seed is in itself upon the earth and it was so and the earth brought forth grass and herb yielding seed after his kind and the tree yielding fruit whose seed was in itself after his kind and God saw that it was good and God said let there be lights in the firmament of the heaven to divide the day from the night and let them be for signs and for seasons and for days and years and God made two great lights the greater light to rule the day and the lesser light to rule the night he made the stars also and God set them in the firmament of the heaven to give light upon the earth and to rule over the day and over the night and to divide the light from the darkness and God saw that it was good and God blessed them saying be fruitful and multiply and fill the waters in the seas and let fowl multiply in the earth and God created great whales and every living creature that moveth which the waters brought forth abundantly after their kind and every winged fowl after his kind and God saw that it was good
+The Lord is my shepherd I shall not want he maketh me to lie down in green pastures he leadeth me beside the still waters he restoreth my soul he leadeth me in the paths of righteousness for his name sake yea though I walk through the valley of the shadow of death I will fear no evil for thou art with me thy rod and thy staff they comfort me thou preparest a table before me in the presence of mine enemies thou anointest my head with oil my cup runneth over surely goodness and mercy shall follow me all the days of my life and I will dwell in the house of the Lord for ever blessed is the man that walketh not in the counsel of the ungodly nor standeth in the way of sinners nor sitteth in the seat of the scornful but his delight is in the law of the Lord and in his law doth he meditate day and night and he shall be like a tree planted by the rivers of water that bringeth forth his fruit in his season his leaf also shall not wither and whatsoever he doeth shall prosper the ungodly are not so but are like the chaff which the wind driveth away therefore the ungodly shall not stand in the judgment nor sinners in the congregation of the righteous for the Lord knoweth the way of the righteous but the way of the ungodly shall perish praise ye the Lord praise God in his sanctuary praise him in the firmament of his power praise him for his mighty acts praise him according to his excellent greatness praise him with the sound of the trumpet praise him with the psaltery and harp praise him with the timbrel and dance praise him with stringed instruments and organs praise him upon the loud cymbals let every thing that hath breath praise the Lord
+In the beginning was the Word and the Word was with God and the Word was God the same was in the beginning with God all things were made by him and without him was not any thing made that was made in him was life and the life was the light of men and the light shineth in darkness and the darkness comprehended it not there was a man sent from God whose name was John the same came for a witness to bear witness of the Light that all men through him might believe he was not that Light but was sent to bear witness of that Light that was the true Light which lighteth every man that cometh into the world he was in the world and the world was made by him and the world knew him not he came unto his own and his own received him not but as many as received him to them gave he power to become the sons of God even to them that believe on his name and the Word was made flesh and dwelt among us and we beheld his glory the glory as of the only begotten of the Father full of grace and truth for God so loved the world that he gave his only begotten Son that whosoever believeth in him should not perish but have everlasting life for God sent not his Son into the world to condemn the world but that the world through him might be saved
+Trust in the Lord with all thine heart and lean not unto thine own understanding in all thy ways acknowledge him and he shall direct thy paths be not wise in thine own eyes fear the Lord and depart from evil my son despise not the chastening of the Lord neither be weary of his correction for whom the Lord loveth he correcteth even as a father the son in whom he delighteth happy is the man that findeth wisdom and the man that getteth understanding for the merchandise of it is better than the merchandise of silver and the gain thereof than fine gold she is more precious than rubies and all the things thou canst desire are not to be compared unto her length of days is in her right hand and in her left hand riches and honour her ways are ways of pleasantness and all her paths are peace she is a tree of life to them that lay hold upon her and happy is every one that retaineth her the Lord by wisdom hath founded the earth by understanding hath he established the heavens by his knowledge the depths are broken up and the clouds drop down the dew a soft answer turneth away wrath but grievous words stir up anger the tongue of the wise useth knowledge aright but the mouth of fools poureth out foolishness the eyes of the Lord are in every place beholding the evil and the good a wholesome tongue is a tree of life but perverseness therein is a breach in the spirit better is a dinner of herbs where love is than a stalled ox and hatred therewith
+Vanity of vanities saith the Preacher vanity of vanities all is vanity what profit hath a man of all his labour which he taketh under the sun one generation passeth away and another generation cometh but the earth abideth for ever the sun also ariseth and the sun goeth down and hasteth to his place where he arose the wind goeth toward the south and turneth about unto the north it whirleth about continually and the wind returneth again according to his circuits all the rivers run into the sea yet the sea is not full unto the place from whence the rivers come thither they return again to every thing there is a season and a time to every purpose under the heaven a time to be born and a time to die a time to plant and a time to pluck up that which is planted a time to kill and a time to heal a time to break down and a time to build up a time to weep and a time to laugh a time to mourn and a time to dance a time to cast away stones and a time to gather stones together a time to embrace and a time to refrain from embracing a time to get and a time to lose a time to keep and a time to cast away a time to rend and a time to sew a time to keep silence and a time to speak a time to love and a time to hate a time of war and a time of peace he hath made every thing beautiful in his time also he hath set the world in their heart
+Blessed are the poor in spirit for theirs is the kingdom of heaven blessed are they that mourn for they shall be comforted blessed are the meek for they shall inherit the earth blessed are they which do hunger and thirst after righteousness for they shall be filled blessed are the merciful for they shall obtain mercy blessed are the pure in heart for they shall see God blessed are the peacemakers for they shall be called the children of God ye are the salt of the earth ye are the light of the world a city that is set on an hill cannot be hid neither do men light a candle and put it under a bushel but on a candlestick and it giveth light unto all that are in the house let your light so shine before men that they may see your good works and glorify your Father which is in heaven judge not that ye be not judged for with what judgment ye judge ye shall be judged and with what measure ye mete it shall be measured to you again ask and it shall be given you seek and ye shall find knock and it shall be opened unto you for every one that asketh receiveth and he that seeketh findeth and to him that knocketh it shall be opened enter ye in at the strait gate for wide is the gate and broad is the way that leadeth to destruction and many there be which go in thereat because strait is the gate and narrow is the way which leadeth unto life and few there be that find it
+Comfort ye comfort ye my people saith your God speak ye comfortably to Jerusalem and cry unto her that her warfare is accomplished that her iniquity is pardoned the voice of him that crieth in the wilderness prepare ye the way of the Lord make straight in the desert a highway for our God every valley shall be exalted and every mountain and hill shall be made low and the crooked shall be made straight and the rough places plain and the glory of the Lord shall be revealed and all flesh shall see it together for the mouth of the Lord hath spoken it all flesh is grass and all the goodliness thereof is as the flower of the field the grass withereth the flower fadeth but the word of our God shall stand for ever hast thou not known hast thou not heard that the everlasting God the Lord the Creator of the ends of the earth fainteth not neither is weary there is no searching of his understanding he giveth power to the faint and to them that have no might he increaseth strength even the youths shall faint and be weary and the young men shall utterly fall but they that wait upon the Lord shall renew their strength they shall mount up with wings as eagles they shall run and not be weary and they shall walk and not faint fear thou not for I am with thee be not dismayed for I am thy God I will strengthen thee yea I will help thee yea I will uphold thee with the right hand of my righteousness
+And I saw a new heaven and a new earth for the first heaven and the first earth were passed away and there was no more sea and I John saw the holy city new Jerusalem coming down from God out of heaven prepared as a bride adorned for her husband and I heard a great voice out of heaven saying behold the tabernacle of God is with men and he will dwell with them and they shall be his people and God himself shall be with them and be their God and God shall wipe away all tears from their eyes and there shall be no more death neither sorrow nor crying neither shall there be any more pain for the former things are passed away and he that sat upon the throne said behold I make all things new and he said unto me write for these words are true and faithful I am Alpha and Omega the beginning and the end I will give unto him that is athirst of the fountain of the water of life freely blessed are they that do his commandments that they may have right to the tree of life and may enter in through the gates into the city and the Spirit and the bride say come and let him that heareth say come and let him that is athirst come and whosoever will let him take the water of life freely surely I come quickly amen even so come Lord Jesus the grace of our Lord Jesus Christ be with you all amen
+faith hope charity love mercy grace glory kingdom covenant temple priest prophet apostle disciple angel cherubim seraphim trumpet harvest vineyard shepherd lamb lion eagle dove olive fig mustard sower seed soil rock cornerstone altar sacrifice burnt offering incense frankincense myrrh gold silver brass iron clay stone marble jasper sapphire emerald onyx pearl crystal river fountain well spring rain dew snow hail thunder lightning whirlwind earthquake fire cloud pillar smoke shadow light darkness morning evening midnight dawn day night sun moon star heaven earth sea mountain valley desert wilderness garden eden zion jerusalem bethlehem nazareth galilee jordan egypt babylon tyre sidon nineveh sodom scroll book law psalm hymn proverb parable miracle sign wonder healing blessing curse oath vow prayer fasting repentance forgiveness redemption salvation damnation judgment mercy seat throne crown sword shield helmet breastplate spear bow arrow chariot horse camel donkey ox sheep goat calf fowl fish bread wine oil honey milk butter cheese wheat barley corn grapes figs pomegranates olives dates almonds nuts salt leaven oven mill stone press net hook boat ship anchor sail wind wave shore island coast border gate wall tower fortress palace tent tabernacle veil curtain ark mercy covenant testimony manna quail rock water blood flesh bone skin heart soul mind strength spirit breath voice tongue eye ear hand foot finger toe hair beard garment robe mantle girdle sandal staff rod ring seal signet coin talent pound mite widow orphan stranger pilgrim sojourner servant master king queen prince ruler judge elder scribe pharisee sadducee publican sinner saint righteous wicked foolish wise simple prudent scorner sluggard diligent rich poor hungry thirsty naked sick prisoner dead living resurrection ascension descent glory honor power dominion authority forever everlasting eternal immortal invisible almighty Jehovah Elohim Adonai Messiah Emmanuel Saviour Redeemer Comforter Intercessor Mediator Advocate High Priest King of kings Lord of lords Prince of Peace Wonderful Counsellor Mighty God Everlasting Father Lamb of God Son of Man Son of God Son of David Root of Jesse Branch Vine Door Way Truth Life Resurrection Shepherd Bishop Pastor Teacher Prophet Evangelist Deacon Elder Brother Friend Bridegroom Judge Creator Maker Preserver Deliverer Refuge Fortress Shield Buckler Horn Rock Tower Stronghold Portion Inheritance Reward Crown Joy Peace Rest Sabbath Jubilee Trumpet Atonement Passover Pentecost Tabernacles Feast Harvest Firstfruits Offering Tithe Vow Oath Blessing Praise Worship Prayer Supplication Intercession Thanksgiving Confession Repentance Faith Hope Charity Patience Meekness Temperance Humility Holiness Righteousness Justice Equity Truth Mercy Grace Forgiveness Reconciliation Adoption Regeneration Sanctification Justification Glorification Salvation Redemption Ransom Propitiation Reconciliation Communion Fellowship Covenant Testament Dispensation Kingdom Church Body Bride Flock Household Family Nation Tribe Tongue People Kindred Generation Age World Cosmos Creation Nature Providence Miracle Revelation Inspiration Scripture Canon Gospel Epistle Prophecy Vision Dream Sign Wonder Parable Proverb Psalm Hymn Song Ode Lamentation Woe Blessing Beatitude Commandment Statute Ordinance Judgment Precept Law Torah Teaching Doctrine Wisdom Knowledge Understanding Counsel Might Fear Glory Majesty Holiness Beauty Splendor Power Authority Dominion Sovereignty Eternity Infinity Omnipresence Omniscience Omnipotence Immutability Faithfulness Justice Mercy Love Grace Truth Holiness Righteousness Peace Joy Goodness Kindness Gentleness Faithfulness Self-control Patience Longsuffering Forbearance Tolerance Forgiveness Compassion Mercy Tenderness Affection Devotion Zeal Fervor Diligence Watchfulness Sobriety Vigilance Prayerfulness Thankfulness Contentment Satisfaction Sufficiency Abundance Plenty Prosperity Blessing Fruitfulness Increase Multiplication Dominion Subdue Fill Replenish Cultivate Keep Guard Protect Preserve Sustain Uphold Establish Strengthen Comfort Encourage Exhort Rebuke Reprove Correct Instruct Teach Preach Proclaim Declare Announce Publish Reveal Manifest Show Demonstrate Exhibit Display Unveil Disclose Discover Uncover Expose Explain Interpret Expound Illustrate Clarify Illuminate Enlighten Inform Notify Advise Counsel Guide Lead Direct Instruct Command Charge Ordain Appoint Commission Send Dispatch Delegate Authorize Empower Enable Equip Furnish Supply Provide Prepare Ready Fit Qualify Train Discipline Exercise Practice Habit Custom Tradition Ritual Ceremony Ordinance Sacrament Symbol Type Shadow Figure Pattern Example Model Copy Image Likeness Similitude Representation Emblem Token Sign Mark Seal Stamp Impression Character Nature Essence Substance Reality Truth Fact Certainty Assurance Confidence Trust Reliance Dependence Hope Expectation Anticipation Prospect Promise Assurance Guarantee Pledge Covenant Oath Vow Commitment Dedication Consecration Devotion Allegiance Loyalty Faithfulness Fidelity Constancy Steadfastness Perseverance Endurance Patience Fortitude Courage Boldness Confidence Assurance Security Safety Protection Refuge Shelter Haven Harbor Sanctuary Asylum Retreat Fortress Stronghold Citadel Tower Wall Bulwark Rampart Shield Buckler Helmet Armor Weapon Sword Spear Bow Arrow Quiver Shield Breastplate Girdle Shoes Helmet Salvation Righteousness Truth Peace Faith Spirit Word Prayer`;
+const BIBLE_TOKENS = KJV_TEXT.toUpperCase().replace(/[^A-Z ]/g,' ').split(/\s+/).filter(Boolean);
+const UNIQUE_WORDS = Array.from(new Set(BIBLE_TOKENS));
+$('#word-count').textContent = BIBLE_TOKENS.length.toLocaleString()+' TOKENS / '+UNIQUE_WORDS.length+' UNIQUE';
+
+/* ---------- ORACLE ENGINE : millisecond-seeded ---------- */
+let lastWords=[];
+function xorshift(seed){ let x=(seed>>>0)||0x9E3779B9; return function(){ x^=x<<13; x^=x>>>17; x^=x<<5; x>>>=0; return x/4294967296; }; }
+function castOracle(source,keyChar){
+  const now=new Date();
+  const ms=now.getMilliseconds();
+  const perf=Math.floor(performance.now()*1000);
+  const keyCode=keyChar?keyChar.toUpperCase().charCodeAt(0):0;
+  const seed=((now.getTime()>>>0) ^ (ms*2654435761) ^ perf ^ (keyCode*7919))>>>0;
+  const rand=xorshift(seed);
+  const count=5+Math.floor(rand()*6); // 5..10
+  const words=[]; let guard=0;
+  while(words.length<count && guard++<99){ const w=UNIQUE_WORDS[Math.floor(rand()*UNIQUE_WORDS.length)]; if(!words.includes(w)) words.push(w); }
+  lastWords=words;
+  const godNum=Math.floor(rand()*10000);
+  let passage=words.join(' ');
+  passage=passage.charAt(0)+passage.slice(1).toLowerCase()+'.';
+  $('#oracle-passage').textContent=passage;
+  $('#oracle-chips').innerHTML=words.map(w=>'<span class="word-chip">'+w+'</span>').join('');
+  const p2=n=>String(n).padStart(2,'0'), p3=n=>String(n).padStart(3,'0');
+  $('#seed-readout').textContent=
+`ENTROPY SOURCE : ${source}${keyChar?' — KEY "'+keyChar.toUpperCase()+'"':''}
+TIMESTAMP (MS) : ${p2(now.getHours())}:${p2(now.getMinutes())}:${p2(now.getSeconds())}.${p3(ms)}  <-- EXACT MILLISECOND: ${p3(ms)}
+SEED (DEC/HEX) : ${seed} / 0x${seed.toString(16).toUpperCase()}
+GOD NUMBER     : ${godNum}   WORDS CAST: ${count}
+UNIQUE KJV WORDS: ${BIBLE_TOKENS.length.toLocaleString()} TOKENS / ${UNIQUE_WORDS.length} UNIQUE
+METHOD         : xorshift32(seed = epoch_ms XOR keypress_ms)`;
+  const hist=$('#oracle-history');
+  if(hist.querySelector('li') && hist.querySelector('li').textContent.includes('No lots')) hist.innerHTML='';
+  const li=document.createElement('li');
+  li.innerHTML='<span class="yellow">'+p2(now.getHours())+':'+p2(now.getMinutes())+':'+p2(now.getSeconds())+'.'+p3(ms)+'</span> seed='+seed+' → <span class="white">'+words.join(' ')+'</span>';
+  hist.prepend(li); while(hist.children.length>6) hist.removeChild(hist.lastChild);
+  const teaser=$('#home-oracle'); if(teaser) teaser.textContent='“'+words.join(' · ')+'”  ['+p3(ms)+'ms]';
+  if(soundOn) words.slice(0,4).forEach((w,i)=>setTimeout(()=>beep(520+w.length*37,.06),i*70));
+  return words;
+}
+$('#cast-btn').addEventListener('click',e=>castOracle('MOUSE CLICK'));
+$('#godnum-btn').addEventListener('click',()=>{ const w=castOracle('GOD NUMBER BUTTON'); $('#g-msg').textContent=''; });
+$('#home-cast').addEventListener('click',()=>{ castOracle('HOME PANE BUTTON'); setView('oracle'); });
+$('#copy-btn').addEventListener('click',e=>{
+  const txt=lastWords.join(' ')||$('#oracle-passage').textContent;
+  if(navigator.clipboard) navigator.clipboard.writeText(txt);
+  e.target.textContent='COPIED ✓'; setTimeout(()=>e.target.textContent='COPY WORDS',900);
+});
+
+/* ---------- QUOTES ---------- */
+const QUOTES=[
+"“What's reality? I don't know. When my bird was looking at my computer monitor I thought, that bird has no idea what he's looking at.” — T.A.D.",
+"“I am the chosen one. I decide what's good and what's bad.” — on TempleOS design",
+"“640×480. That's what God said. It's a covenant, like circumcision.” — on the resolution",
+"“No networking. God doesn't need the internet.” — design law",
+"“I wrote TempleOS. It's God's temple. It's the Third Temple.” — T.A.D.",
+"“A kid can draw in 640×480 and it's a fair standard for everybody.” — on accessibility"
+];
+let qi=0; $('#quote-btn').addEventListener('click',()=>{ qi=(qi+1)%QUOTES.length; $('#home-quote').textContent=QUOTES[qi]; beep(760,.04); });
+
+/* ---------- NAVIGATION ---------- */
+const TITLES={home:'C:\\Home\\MUSEUM — HOME_SHRINE.HC',archive:'C:\\Home\\MUSEUM — ARCHIVE.HC',oracle:'C:\\Home\\GOD — ORACLE.HC',game:'C:\\Home\\Games — HOLY_QUEST.HC',terminal:'C:\\Home — TERMINAL (HolyC SHELL)',holyc:'C:\\Adam — HOLYC_SOURCE.HC',license:'C:\\Home — LICENSE.TXT'};
+let currentView='home', selectedIdx=0;
+const menuItems=$$('.menu-item');
+function setView(name){
+  currentView=name;
+  $$('.view').forEach(v=>v.classList.remove('active'));
+  const el=$('#view-'+name); if(el) el.classList.add('active');
+  $('#main-title').textContent=TITLES[name]||name.toUpperCase();
+  menuItems.forEach((m,i)=>{ const on=m.dataset.view===name; m.classList.toggle('selected',on); if(on) selectedIdx=i; });
+  beep(660,.03);
+  if(name==='terminal') setTimeout(()=>$('#term-input').focus(),30);
+  if(name==='game') drawGame();
+}
+menuItems.forEach(m=>m.addEventListener('click',()=>setView(m.dataset.view)));
+$$('[data-goto]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.goto)));
+$('#footer-lic').addEventListener('click',()=>setView('license'));
+
+/* ---------- ARCHIVE EXHIBITS ---------- */
+const EXHIBITS={
+'1969':['1969 — BORN IN WEST ALLIS, WISCONSIN','Terrence Andrew Davis (Dec 15, 1969 – Aug 11, 2018) grew up around computers, programming on a Commodore 64 and later earning a master\'s degree in electrical engineering from Arizona State University. He worked on Ticketmaster\'s VAX operating systems before beginning the project that would consume his life.'],
+'1993':['1993 — EARLY EXPERIMENTS','Davis began work on what would become TempleOS under names like J Operating System and LoseThos — a hobby OS written from scratch, already committed to simplicity, graphics, and doing everything himself.'],
+'2003':['2003 — TEMPLEOS BEGINS IN EARNEST','After a religious awakening he attributed to God, Davis reframed the OS as a divine commission: a modern Third Temple. Work intensified into a decade-long, single-author effort — kernel, compiler, graphics, filesystem and applications.'],
+'2005':['2005 — HOLYC & THE 640×480 COVENANT','The HolyC language — a JIT-compiled C dialect that doubles as the shell — matured. Davis fixed the display at 640×480 in 16 colors, arguing a child should be able to draw for God without complexity in the way.'],
+'2013':['2013 — TEMPLEOS v1.0 / PUBLIC RELEASES','TempleOS reached broad public attention through articles and videos. Viewers encountered Flight (a 3-D demo), hymns generated with the PC speaker, After Egypt, and the God oracle — random Bible words from high-resolution timing entropy.'],
+'2017':['2017 — FINAL RELEASES','Davis continued updating TempleOS while struggling with homelessness and illness, livestreaming coding sessions that mixed virtuoso systems programming with the oracle sessions his audience came to watch.'],
+'2018':['2018 — DEATH & LEGACY','Davis died on August 11, 2018, aged 48, after being struck by a train in The Dalles, Oregon. Tributes from programmers worldwide recognised a singular, if troubled, engineering achievement.'],
+'now':['TODAY — PRESERVATION','TempleOS is preserved by archives, emulators, forks (such as ZealOS and TinkerOS), documentaries and museums like this one. Its code remains public domain — free for anyone to study, run and learn from, exactly as its author left it.']
+};
+$$('.year-btn').forEach(b=>b.addEventListener('click',()=>{
+  $$('.year-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active');
+  const ex=EXHIBITS[b.dataset.year]; $('#exhibit-title').textContent=ex[0]; $('#exhibit-text').textContent=ex[1]; beep(820,.04);
+}));
+
+/* ---------- TERMINAL ---------- */
+const termOut=$('#term-out'), termInput=$('#term-input');
+let cmdHistory=[], histIdx=-1;
+function tline(txt,cls=''){ const d=document.createElement('div'); d.className='term-line '+cls; d.innerHTML=txt; termOut.appendChild(d); termOut.scrollTop=termOut.scrollHeight; }
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function bootTerm(){
+  tline('<span class="term-ok">TempleOS Terminal — HolyC Shell v5.03</span>','');
+  tline('Public domain OS. Ring-0. You are God here.','term-warn');
+  tline('Type <span class="term-code">help</span> for commands. Try <span class="term-code">god</span>.','');
+  tline('------------------------------------------------------------','term-code');
+}
+bootTerm();
+function processCmd(raw){
+  const input=raw.trim(); tline('C:\\Home&gt; <span class="term-cmd">'+esc(input)+'</span>');
+  if(!input) return;
+  cmdHistory.push(input); histIdx=cmdHistory.length;
+  const parts=input.split(/\s+/), cmd=parts[0].toLowerCase(), arg=parts.slice(1).join(' ');
+  const code=(s)=>tline(esc(s),'term-code');
+  switch(cmd){
+    case 'help': tline('<span class="term-ok">COMMANDS:</span> help · dir/ls · ver · date · time · god/oracle · lot · hymn · type &lt;file&gt; · calc &lt;expr&gt; · quote · terry · game · oracle · clear/cls · exit',''); break;
+    case 'dir': case 'ls':
+      tline('Directory of C:\\Home','term-ok');
+      tline('  Adam\\            &lt;DIR&gt;     HolyC source of the OS itself\n  Games\\           &lt;DIR&gt;     AfterEgypt, HolyQuest, Flight\n  Hymns\\           &lt;DIR&gt;     PC-speaker hymns (.HHZ)\n  BIBLE.TXT         4,047,392  King James, public domain\n  GODWORDS.HC           8,192  oracle — cast lots here\n  README.TXT          1,024  640x480 forever',''); break;
+    case 'ver': tline('TempleOS Museum Simulator v5.03 — single HTML file, MIT License. Original TempleOS: public domain.','term-ok'); break;
+    case 'date': tline(new Date().toDateString(),'term-ok'); break;
+    case 'time': { const d=new Date(); tline(d.toLocaleTimeString()+'.'+String(d.getMilliseconds()).padStart(3,'0')+'  <-- your entropy lives here','term-ok'); break; }
+    case 'god': case 'oracle': { const w=castOracle('TERMINAL COMMAND','G'); tline('<span class="term-warn">GOD SAYS:</span> <span style="color:#FFFFFF"><b>'+w.join(' ')+'</b></span>'); code('U0 God() { "%s\\n"; } // HolyC executed in ring-0'); break; }
+    case 'lot': { const ms=new Date().getMilliseconds(); tline('LOT CAST @ millisecond '+ms+' → <span class="term-warn"><b>'+(Math.floor(xorshift(Date.now())()*1000))+'</b></span> (0-999)'); break; }
+    case 'hymn': tline('♪ Playing hymn on PC speaker… (toggle HYMN in the left pane for sound)','term-warn'); $('#hymn-btn').click(); break;
+    case 'quote': qi=(qi+1)%QUOTES.length; tline(esc(QUOTES[qi]),'term-warn'); break;
+    case 'terry': tline('TERRY A. DAVIS (1969-2018): sole author of TempleOS — 100k+ lines of HolyC, a 64-bit public-domain OS built as God\'s Third Temple.',''); break;
+    case 'type':
+      if(/bible/i.test(arg)) tline('BIBLE.TXT: "In the beginning God created the heaven and the earth…" ['+BIBLE_TOKENS.length.toLocaleString()+' tokens embedded in this file]','');
+      else if(/license/i.test(arg)) tline('MIT License — free to use, modify, share. See LICENSE pane (menu 7).','term-ok');
+      else if(/readme/i.test(arg)) tline('README: 640x480. 16 colors. No networking. One author. Public domain.','');
+      else tline('File not found: '+esc(arg||'(none)')+' — try BIBLE.TXT, LICENSE, README.TXT','term-err'); break;
+    case 'calc':
+      if(/^[0-9+\-*/(). %]+$/.test(arg) && arg){ try{ tline(arg+' = <span class="term-warn"><b>'+Function('"use strict";return('+arg+')')()+'</b></span>'); }catch(e){ tline('Bad expression.','term-err'); } }
+      else tline('Usage: calc 7*6  (numbers and + - * / only)','term-err'); break;
+    case 'clear': case 'cls': termOut.innerHTML=''; bootTerm(); break;
+    case 'game': setView('game'); tline('Opening HOLY QUEST… press START in the game pane.','term-ok'); break;
+    case 'home': setView('home'); break;
+    case 'exit': setView('home'); tline('Returned to HOME SHRINE.','term-ok'); break;
+    case 'echo': tline(esc(arg)); break;
+    default:
+      if(/^".*"$/.test(input)){ tline('<span class="term-code">HolyC string literal printed:</span> '+esc(input.slice(1,-1))); }
+      else tline('Bad command or file name: "'+esc(cmd)+'" — type <span class="term-code">help</span>','term-err');
+  }
+}
+$('#term-go').addEventListener('click',()=>{ processCmd(termInput.value); termInput.value=''; termInput.focus(); });
+termInput.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){ processCmd(termInput.value); termInput.value=''; }
+  else if(e.key==='ArrowUp'){ e.preventDefault(); if(histIdx>0){ histIdx--; termInput.value=cmdHistory[histIdx]||''; } }
+  else if(e.key==='ArrowDown'){ e.preventDefault(); if(histIdx<cmdHistory.length){ histIdx++; termInput.value=cmdHistory[histIdx]||''; } }
+  e.stopPropagation();
+});
+
+/* ---------- GAME : HOLY QUEST ---------- */
+const cv=$('#gameCanvas'), ctx=cv.getContext('2d');
+const GW=320, GH=200;
+let G=null, rafId=null, lastT=0;
+const keysDown={};
+function newGame(){
+  G={running:true,paused:false,score:0,lives:3,level:1,crosses:0,invuln:0,shootCd:0,spawnT:0,
+     player:{x:154,y:94,w:12,h:12,dx:1,dy:0}, demons:[], items:[], shots:[]};
+  for(let i=0;i<5;i++) spawnCross(); spawnDemon(); spawnDemon();
+  $('#g-msg').textContent='QUEST BEGUN. GOD SPEED.';
+  updateHUD(); lastT=performance.now();
+  if(rafId) cancelAnimationFrame(rafId); rafId=requestAnimationFrame(loop);
+}
+function spawnCross(){ if(!G) return; G.items.push({x:8+Math.random()*296,y:8+Math.random()*176,w:10,h:10}); }
+function spawnDemon(){ if(!G) return; const edge=Math.floor(Math.random()*4); let x=edge===0?0:edge===1?308:Math.random()*308, y=edge===2?0:edge===3?188:Math.random()*188; G.demons.push({x,y,w:12,h:12,sp:20+G.level*4+Math.random()*10}); }
+function updateHUD(){ if(!G) return; $('#g-score').textContent=G.score; $('#g-level').textContent=G.level; $('#g-cross').textContent=G.crosses; $('#g-lives').textContent='♥'.repeat(Math.max(0,G.lives))||'—'; }
+function shoot(){ if(!G||G.shootCd>0) return; const p=G.player; G.shots.push({x:p.x+5,y:p.y+5,w:4,h:4,dx:p.dx*170,dy:p.dy*170,life:1.1}); G.shootCd=.22; beep(1200,.04); }
+function hurt(){
+  if(G.invuln>0) return; G.lives--; G.invuln=1.4; beep(160,.18,'sawtooth',.06);
+  G.player.x=154; G.player.y=94; updateHUD();
+  if(G.lives<=0){ G.running=false; $('#g-msg').textContent='GAME OVER — SCORE '+G.score+'. PRESS START.'; drawGame(); }
+  else $('#g-msg').textContent='STRUCK BY A DEMON! LIVES: '+G.lives;
+}
+function loop(t){
+  if(!G||!G.running) return;
+  const dt=Math.min(.033,(t-lastT)/1000||.016); lastT=t;
+  if(!G.paused){
+    const p=G.player, sp=98;
+    let mx=0,my=0;
+    if(keysDown['arrowleft']||keysDown['a']) mx=-1; if(keysDown['arrowright']||keysDown['d']) mx=1;
+    if(keysDown['arrowup']||keysDown['w']) my=-1; if(keysDown['arrowdown']||keysDown['s']) my=1;
+    if(mx||my){ p.dx=mx||p.dx; p.dy=my||p.dy; if(mx&&my){p.dx=mx;p.dy=0;} }
+    p.x=Math.max(0,Math.min(GW-p.w,p.x+mx*sp*dt)); p.y=Math.max(0,Math.min(GH-p.h,p.y+my*sp*dt));
+    if(keysDown[' ']) shoot();
+    G.shootCd=Math.max(0,G.shootCd-dt); G.invuln=Math.max(0,G.invuln-dt);
+    G.spawnT-=dt; if(G.spawnT<=0){ spawnDemon(); G.spawnT=Math.max(.7,2.2-G.level*.18); }
+    G.demons.forEach(d=>{ const dx=p.x-d.x, dy=p.y-d.y, len=Math.hypot(dx,dy)||1; d.x+=dx/len*d.sp*dt; d.y+=dy/len*d.sp*dt;
+      if(Math.abs(d.x-p.x)<11&&Math.abs(d.y-p.y)<11) hurt(); });
+    G.shots=G.shots.filter(s=>{ s.x+=s.dx*dt; s.y+=s.dy*dt; s.life-=dt; return s.life>0&&s.x>-5&&s.x<GW&&s.y>-5&&s.y<GH; });
+    G.shots.forEach(s=>{ G.demons=G.demons.filter(d=>{ const hit=Math.abs(s.x-d.x)<10&&Math.abs(s.y-d.y)<10; if(hit){ G.score+=50; beep(340,.07); updateHUD(); } return !hit; }); });
+    G.items=G.items.filter(it=>{ const got=Math.abs(it.x-p.x)<12&&Math.abs(it.y-p.y)<12; if(got){ G.score+=100; G.crosses++; beep(1560,.06); if(G.crosses%5===0){ G.level++; $('#g-msg').textContent='LEVEL '+G.level+' — THE DEMONS MULTIPLY.'; spawnDemon(); } spawnCross(); updateHUD(); } return !got; });
+  }
+  drawGame();
+  if(G.running) rafId=requestAnimationFrame(loop);
+}
+function drawGame(){
+  ctx.fillStyle='#000000'; ctx.fillRect(0,0,GW,GH);
+  ctx.fillStyle='#0000AA'; for(let x=0;x<GW;x+=20) for(let y=0;y<GH;y+=20) ctx.fillRect(x,y,2,2);
+  ctx.strokeStyle='#55FFFF'; ctx.lineWidth=2; ctx.strokeRect(1,1,GW-2,GH-2);
+  if(!G){ ctx.fillStyle='#FFFFFF'; ctx.font='bold 12px "Courier New"'; ctx.fillText('HOLY QUEST',118,86); ctx.fillStyle='#FFFF55'; ctx.font='10px "Courier New"'; ctx.fillText('PRESS START, PILGRIM',102,106); return; }
+  // crosses
+  G.items.forEach(it=>{ ctx.fillStyle='#FFFF55'; ctx.fillRect(it.x+4,it.y,3,10); ctx.fillRect(it.x,it.y+4,10,3); });
+  // demons
+  G.demons.forEach(d=>{ ctx.fillStyle='#FF5555'; ctx.fillRect(d.x,d.y+3,12,9); ctx.fillStyle='#FFFF55'; ctx.fillRect(d.x,d.y,3,4); ctx.fillRect(d.x+9,d.y,3,4); ctx.fillStyle='#FFFFFF'; ctx.fillRect(d.x+2,d.y+6,2,2); ctx.fillRect(d.x+8,d.y+6,2,2); });
+  // shots
+  ctx.fillStyle='#55FFFF'; G.shots.forEach(s=>ctx.fillRect(s.x,s.y,4,4));
+  // player: golden knight-cross
+  const p=G.player; if(!(G.invuln>0 && Math.floor(performance.now()/90)%2===0)){
+    ctx.fillStyle='#0000AA'; ctx.fillRect(p.x,p.y+4,12,8);
+    ctx.fillStyle='#FFFF55'; ctx.fillRect(p.x+5,p.y,3,12); ctx.fillRect(p.x+2,p.y+4,8,3);
+    ctx.fillStyle='#FFFFFF'; ctx.fillRect(p.x+5,p.y+4,3,3);
+  }
+  if(G.paused){ ctx.fillStyle='#FFFFFF'; ctx.font='bold 14px "Courier New"'; ctx.fillText('II PAUSED',118,100); }
+  if(!G.running && G.lives<=0){ ctx.fillStyle='#FF5555'; ctx.font='bold 14px "Courier New"'; ctx.fillText('GAME OVER',112,92); ctx.fillStyle='#FFFFFF'; ctx.font='10px "Courier New"'; ctx.fillText('FINAL SCORE '+G.score,116,110); }
+}
+$('#g-start').addEventListener('click',newGame);
+$('#g-pause').addEventListener('click',()=>{ if(G&&G.running){ G.paused=!G.paused; $('#g-msg').textContent=G.paused?'PAUSED.':'RESUMED.'; drawGame(); }});
+$('#g-fire').addEventListener('click',shoot);
+$$('[data-move]').forEach(b=>b.addEventListener('click',()=>{
+  if(!G) newGame(); if(!G) return; const p=G.player, step=14;
+  const d=b.dataset.move;
+  if(d==='up'){p.y=Math.max(0,p.y-step);p.dx=0;p.dy=-1;} if(d==='down'){p.y=Math.min(GH-p.h,p.y+step);p.dx=0;p.dy=1;}
+  if(d==='left'){p.x=Math.max(0,p.x-step);p.dx=-1;p.dy=0;} if(d==='right'){p.x=Math.min(GW-p.w,p.x+step);p.dx=1;p.dy=0;}
+  drawGame();
+}));
+
+/* ---------- GLOBAL KEYBOARD ---------- */
+document.addEventListener('keydown',e=>{
+  const tag=(e.target.tagName||'').toLowerCase();
+  if(tag==='input'||tag==='textarea') return;
+  const k=e.key.toLowerCase(); keysDown[k]=true; keysDown[e.key]=true;
+  // Game controls take priority in game pane
+  if(currentView==='game'){
+    if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)||k===' '){ e.preventDefault(); }
+    if(k==='p'&&G){ G.paused=!G.paused; drawGame(); }
+    if(k==='enter'&&(!G||!G.running)) newGame();
+    return;
+  }
+  // Oracle: any letter casts lots with THIS keypress millisecond
+  if(currentView==='oracle' && /^[a-z]$/.test(k)){ castOracle('KEYPRESS',e.key); return; }
+  if(k==='g' && currentView!=='oracle'){ castOracle('GLOBAL KEY G','g'); setView('oracle'); return; }
+  if(['1','2','3','4','5','6','7'].includes(k)){ setView(menuItems[Number(k)-1].dataset.view); return; }
+  if(k==='arrowdown'){ e.preventDefault(); selectedIdx=(selectedIdx+1)%menuItems.length; menuItems.forEach((m,i)=>m.classList.toggle('selected',i===selectedIdx)); beep(700,.025); }
+  else if(k==='arrowup'){ e.preventDefault(); selectedIdx=(selectedIdx-1+menuItems.length)%menuItems.length; menuItems.forEach((m,i)=>m.classList.toggle('selected',i===selectedIdx)); beep(700,.025); }
+  else if(k==='enter'){ setView(menuItems[selectedIdx].dataset.view); }
+});
+document.addEventListener('keyup',e=>{ keysDown[e.key.toLowerCase()]=false; keysDown[e.key]=false; });
+
+/* ---------- BOOT ---------- */
+fit(); setTimeout(fit,50); setTimeout(fit,250);
+drawGame();
+setView('home');
+</script>
+</body>
+</html>
