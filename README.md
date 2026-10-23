@@ -5,7 +5,7 @@ A lightweight, single-file static web museum and simulator dedicated to preservi
 This project aims to introduce new programmers to the raw, solo engineering feat of a 100,000+ line operating system built entirely from scratch, stripped of modern abstractions.
 
 ## 🚀 Live Demo
-[👉 Click Here to Play the Live Demo!]([https://1nam.github.io/TempleOS_Web_Simulator_and_Museum_Archive/])
+[👉 Click Here to Play the Live Demo!]([https://1nam.github.io/TempleOS_Web_Simulator_and_Museum_Archive/]
 
 
 ## 🎨 Features
