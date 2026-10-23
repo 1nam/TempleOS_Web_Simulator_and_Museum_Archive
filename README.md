@@ -1,13 +1,11 @@
 # 🏛️ TempleOS Web Simulator & Museum Archive
 
-Visit the Website-  https://1nam.github.io/TempleOS_Web_Simulator_and_Museum_Archive/
-
 A lightweight, single-file static web museum and simulator dedicated to preserving the programming legacy and unique architecture of Terry A. Davis's **TempleOS**. 
 
 This project aims to introduce new programmers to the raw, solo engineering feat of a 100,000+ line operating system built entirely from scratch, stripped of modern abstractions.
 
 ## 🚀 Live Demo
-*Deploy your link here via GitHub Pages or paste your live Design Arena link!*
+*https://1nam.github.io/TempleOS_Web_Simulator_and_Museum_Archive/*
 
 ## 🎨 Features
 - **Authentic 16-Color UI:** Built inside a rigid, 4:3 viewport matching Terry's historical 640x480 resolution constraints. No rounded corners, no soft gradients—just pure retro computing.
